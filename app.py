@@ -1,6 +1,6 @@
+import streamlit as st
 import requests
 import json
-import gradio as gr
 import os
 from dotenv import load_dotenv
 
@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get Gemini 2 API key from environment variables
-GEMINI2_API_KEY = os.getenv("GEMINI2_API_KEY")
+GEMINI2_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 url = "https://api.gemini2.example.com/assist"  # Replace with Gemini 2 endpoint
 
@@ -34,12 +34,18 @@ def generate_response(prompt):
         actual_response = response_data.get('text', 'No response found.')
         return actual_response
     else:
-        print("Error:", response.text)
         return "Error occurred while generating response."
 
-interface = gr.Interface(
-    fn=generate_response,
-    inputs=gr.Textbox(lines=4, placeholder="Enter your Prompt"),
-    outputs="text"
-)
-interface.launch()
+# Streamlit app
+st.title("Multi-Language Code Assistant")
+
+prompt = st.text_area("Enter your Prompt", "")
+if st.button("Submit"):
+    response = generate_response(prompt)
+    st.text_area("Response", response, height=300)
+
+# Show prompt history
+if st.checkbox("Show History"):
+    st.write("Prompt History:")
+    for p in history:
+        st.write(p)
