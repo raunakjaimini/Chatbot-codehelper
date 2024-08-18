@@ -8,15 +8,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get Gemini 2 API key from environment variables
-GEMINI2_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-url = "https://api.gemini2.example.com/assist"  # Replace with Gemini 2 endpoint
+# Define the Gemini 2 API endpoint
+url = "https://api.gemini2.example.com/assist"  # Replace with the actual Gemini 2 endpoint
 
+# Set up headers for the API request
 headers = {
     'Content-Type': 'application/json',
-    'Authorization': f'Bearer {GEMINI2_API_KEY}'
+    'Authorization': f'Bearer {GOOGLE_API_KEY}'
 }
 
+# Initialize history to keep track of prompts
 history = []
 
 def generate_response(prompt):
@@ -27,24 +30,38 @@ def generate_response(prompt):
         "prompt": final_prompt
     }
 
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+    try:
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        response.raise_for_status()  # Raise an HTTPError for bad responses
 
-    if response.status_code == 200:
         response_data = response.json()
         actual_response = response_data.get('text', 'No response found.')
         return actual_response
-    else:
+    except requests.ConnectionError as e:
+        print(f"Connection error occurred: {e}")
+        return "Connection error: Could not reach the API."
+    except requests.Timeout as e:
+        print(f"Timeout error occurred: {e}")
+        return "Timeout error: The request took too long to complete."
+    except requests.HTTPError as e:
+        print(f"HTTP error occurred: {e}")
+        return f"HTTP error: {e.response.status_code} {e.response.reason}"
+    except requests.RequestException as e:
+        print(f"Request error occurred: {e}")
         return "Error occurred while generating response."
 
-# Streamlit app
+# Streamlit app UI
 st.title("Multi-Language Code Assistant")
 
+# User input
 prompt = st.text_area("Enter your Prompt", "")
+
+# Button to submit the prompt
 if st.button("Submit"):
     response = generate_response(prompt)
     st.text_area("Response", response, height=300)
 
-# Show prompt history
+# Option to display prompt history
 if st.checkbox("Show History"):
     st.write("Prompt History:")
     for p in history:
